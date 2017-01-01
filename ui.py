@@ -5,15 +5,18 @@ import time
 
 
 class KeyHandler(cg.EventHandler):
-    def __init__(self, _canvas, _text, _s_circle, _b_circle):
+    def __init__(self, _canvas, _text, _chance, _s_circle, _b_circle):
         cg.EventHandler.__init__(self)
         self.canvas = _canvas
         self.msg = _text
         self.text = ''
+        self.chance = _chance
         self.game = baseball.Baseball()
         self.game.initialize()
         self.s_circle = _s_circle
         self.b_circle = _b_circle
+        self.chance.setMessage("%d" % (self.game.chance - self.game.game_count))
+        self.msg.setMessage("Game starts!")
         pass
 
     def handle(self, event):
@@ -36,9 +39,16 @@ class KeyHandler(cg.EventHandler):
                 self.text = self.text[:-1]
             elif ascii_key == 13:
                 self.reset()
-                a, b, c = map(int, self.text.strip().split())
+                try:
+                    a, b, c = map(int, self.text.strip().split())
+                except ValueError:
+                    self.text = ''
+                    self.msg.setMessage("Not enough numbers.")
+                    return
                 self.text = ''
                 strike, ball = self.game.check(a, b, c)
+                self.chance.setMessage(
+                    "%d" % (self.game.chance - self.game.game_count))
                 if strike < 0:
                     a, b, c = self.game.num
                     self.msg.setMessage('The answer was %d %d %d.' % (a, b, c))
@@ -75,6 +85,9 @@ class KeyHandler(cg.EventHandler):
             self.b_circle[i].setFillColor('yellow')
         if _strike == 3:
             self.msg.setMessage("Congratulations!")
+            self.game.initialize()
+            self.chance.setMessage(
+                "%d" % (self.game.chance - self.game.game_count))
         pass
 
     def reset(self):
@@ -98,6 +111,10 @@ canvas.add(b_text)
 intro = cg.Text(message="Number Baseball Game", fontsize=37)
 intro.moveTo(400, 50)
 canvas.add(intro)
+
+t_text = cg.Text("", 23)
+t_text.moveTo(100, 450)
+canvas.add(t_text)
 
 k_text = cg.Text("", 31)
 k_text.moveTo(400, 450)
@@ -134,6 +151,6 @@ canvas.add(cb1)
 canvas.add(cb2)
 canvas.add(cb3)
 
-k_handler = KeyHandler(canvas, k_text, strike_circle, ball_circle)
+k_handler = KeyHandler(canvas, k_text, t_text, strike_circle, ball_circle)
 canvas.addHandler(k_handler)
 
